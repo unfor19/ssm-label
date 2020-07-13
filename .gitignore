@@ -1,0 +1,13 @@
+node_modules
+.*
+!.gitignore
+!.github
+*.log
+!.prettierrc.js
+!.eslintrc.js
+!.vscode
+__pycache__/
+!.dockerignore
+*.zip
+dist/
+!.drone.yml
