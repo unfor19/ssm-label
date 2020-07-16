@@ -1,7 +1,7 @@
 #!/bin/bash
 PROJECT_DIR="${PWD}"
 
-rm -rf ${PROJECT_DIR}/dist
+rm -r ${PROJECT_DIR}/dist
 mkdir ${PROJECT_DIR}/dist
 
 echo "🔎  Identifying services folders ..."
@@ -23,6 +23,6 @@ for serviceFolder in $servicesFolders; do
     find "${PROJECT_DIR}/${serviceFolder}" -iname '*.zip' -exec cp {} ${PROJECT_DIR}/dist \;
 done
 
-find "${PROJECT_DIR}" -iname 'cfn-template-*.yml' -exec cp {} ${PROJECT_DIR}/dist \;
+find "${PROJECT_DIR}" -maxdepth 1 -iname 'cfn-template-*.yml' -exec cp {} ${PROJECT_DIR}/dist/ \;
 
 echo "✅  Finished"
