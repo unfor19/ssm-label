@@ -1,8 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
-  ssm-label - Attaches the label `latest` on Parameter create/update, and attaches the label `previous` on the version with the label `latest`.
-
-  On parameter creation, the parameter version will include both labels - `latest` and `previous`
+  ssm-label - Attaches the label `latest` on Parameter create/update.
 
 Parameters:
   AppName:
@@ -19,9 +17,6 @@ Parameters:
   LabelLatestValue:
     Type: String
     Default: latest
-  LabelPreviousValue:
-    Type: String
-    Default: previous
 
 Resources:
   LambdaZipsBucket:
@@ -148,7 +143,6 @@ Resources:
         Variables:
           DEBUG: !Ref DebugLogs
           LABEL_LATEST: !Ref LabelLatestValue
-          LABEL_PREVIOUS: !Ref LabelPreviousValue
     DependsOn:
       - ChangeLogGroup
       - CopyZips
