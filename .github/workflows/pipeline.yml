@@ -14,7 +14,7 @@ jobs:
         run: |
           bash scripts/app_build.sh
       - name: Upload to S3 bucket
-      - uses: qoqa/action-s3-cp@v1.1
+        uses: qoqa/action-s3-cp@v1.1
         with:
           args: --acl public-read
         env:
