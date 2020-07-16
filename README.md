@@ -31,7 +31,7 @@ ssm-label.s3-eu-west-1.amazonaws.com/cfn-template-ssm-label.yml
 
 ### Use in your application
 
-On startup, use AWS SDK and fetch all parameters, filter by label according to a given environment variable (`latest` or `previous`), save the results to a global variable, for example `parameters`. See examples:
+On startup, use AWS SDK and fetch all parameters, filter by label according to a given environment variable which, for example `LABEL=latest`, save the results to a global object and use it across your application. See examples:
 
 - NodeJS
 - Python
