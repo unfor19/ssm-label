@@ -1,0 +1,6 @@
+custom:
+  appname: ssm-label
+  region:
+    dev: eu-west-1
+    staging: eu-west-1
+    prod: eu-west-1

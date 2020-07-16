@@ -1,0 +1,61 @@
+service: ssm-label-label-api
+package:
+  individually: true
+
+plugins:
+  - serverless-pseudo-parameters
+
+frameworkVersion: ">=1.1.0 <2.0.0"
+
+custom:
+  common_mappings: ${file(../../serverless.common.yml):custom}
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: dev
+  region: ${self:custom.common_mappings.region.${self:provider.stage}}
+  memorySize: 128
+  environment:
+    STAGE: ${self:provider.stage}
+    REGION: ${self:provider.region}
+    DEBUG: ${opt:DEBUG, ''}
+    LABEL_LATEST: ${opt:LABEL_LATEST, 'latest'}
+    LABEL_PREVIOUS: ${opt:LABEL_PREVIOUS, 'previous'}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource:
+        - "Fn::Join":
+            - ":"
+            - - "arn:aws:logs"
+              - Ref: "AWS::Region"
+              - Ref: "AWS::AccountId"
+              - "log-group:/aws/lambda/*:*:*"
+    - Effect: "Allow"
+      Action:
+        - "ssm:DescribeParameters"
+        - "ssm:GetParameter"
+        - "ssm:LabelParameterVersion"
+        - "ssm:GetParameterHistory"
+      Resource: "*"
+
+functions:
+  change:
+    handler: change.handler
+    package:
+      artifact: ./dist/dist_label.zip
+    events:
+      - cloudwatchEvent:
+          event:
+            source:
+              - "aws.ssm"
+            detail-type:
+              - "Parameter Store Change"
+            detail:
+              operation:
+                - "Create"
+                - "Update"

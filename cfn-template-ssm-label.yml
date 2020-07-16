@@ -1,0 +1,250 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: |
+  ssm-label - Attaches the label `latest` on Parameter create/update, and attaches the label `previous` on the version with the label `latest`.
+
+  On parameter creation, the parameter version will include both labels - `latest` and `previous`
+
+Parameters:
+  AppName:
+    Type: String
+    Default: ssm-label
+    AllowedValues:
+      - ssm-label
+  DebugLogs:
+    Type: String
+    Default: False
+    AllowedValues:
+      - False
+      - True
+  LabelLatestValue:
+    Type: String
+    Default: latest
+  LabelPreviousValue:
+    Type: String
+    Default: previous
+
+Resources:
+  LambdaZipsBucket:
+    Type: AWS::S3::Bucket
+
+  CopyZips:
+    Type: Custom::CopyZips
+    Properties:
+      ServiceToken: !GetAtt "CopyZipsFunction.Arn"
+      DestBucket: !Ref "LambdaZipsBucket"
+      SourceBucket: !Ref "AppName"
+      Prefix: ""
+      Objects:
+        - dist_label.zip
+
+  CopyZipsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: /
+      Policies:
+        - PolicyName: lambda-copier
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${AppName}/*"
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${LambdaZipsBucket}/*"
+
+  ChangeLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      LogGroupName: /aws/lambda/ssm-label-label-api-change
+  ChangeIamRoleLambdaExecution:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Join
+            - "-"
+            - - ssm-label-label-api
+              - lambda
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:CreateLogGroup"
+                Resource:
+                  - !Sub >-
+                    arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/ssm-label-label-api*:*
+              - Effect: Allow
+                Action:
+                  - "logs:PutLogEvents"
+                Resource:
+                  - !Sub >-
+                    arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/ssm-label-label-api*:*:*
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - !Join
+                    - ":"
+                    - - "arn:aws:logs"
+                      - !Ref "AWS::Region"
+                      - !Ref "AWS::AccountId"
+                      - "log-group:/aws/lambda/*:*:*"
+              - Effect: Allow
+                Action:
+                  - "ssm:DescribeParameters"
+                  - "ssm:GetParameter"
+                  - "ssm:LabelParameterVersion"
+                  - "ssm:GetParameterHistory"
+                Resource: "*"
+      Path: /
+      RoleName: !Join
+        - "-"
+        - - ssm-label-label-api
+          - !Ref "AWS::Region"
+          - lambdaRole
+
+  ChangeLambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        S3Bucket: !Ref LambdaZipsBucket
+        S3Key: dist_label.zip
+      FunctionName: ssm-label-label-api-change
+      Handler: change.handler
+      MemorySize: 128
+      Role: !GetAtt
+        - ChangeIamRoleLambdaExecution
+        - Arn
+      Runtime: python3.8
+      Timeout: 6
+      Environment:
+        Variables:
+          DEBUG: !Ref DebugLogs
+          LABEL_LATEST: !Ref LabelLatestValue
+          LABEL_PREVIOUS: !Ref LabelPreviousValue
+    DependsOn:
+      - ChangeLogGroup
+      - CopyZips
+
+  ChangeEventsRuleCloudWatchEvent1:
+    Type: "AWS::Events::Rule"
+    Properties:
+      EventPattern:
+        source:
+          - aws.ssm
+        detail-type:
+          - Parameter Store Change
+        detail:
+          operation:
+            - Create
+            - Update
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt
+            - ChangeLambdaFunction
+            - Arn
+          Id: changeCloudWatchEvent
+
+  ChangeLambdaPermissionEventsRuleCloudWatchEvent1:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !GetAtt
+        - ChangeLambdaFunction
+        - Arn
+      Action: "lambda:InvokeFunction"
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt
+        - ChangeEventsRuleCloudWatchEvent1
+        - Arn
+
+  # Copy Zips Function
+  CopyZipsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Copies objects from a source S3 bucket to a destination
+      Handler: index.handler
+      Runtime: python3.7
+      Role: !GetAtt "CopyZipsRole.Arn"
+      Timeout: 240
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          import threading
+          import boto3
+          import cfnresponse
+          def copy_objects(source_bucket, dest_bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              for o in objects:
+                  key = prefix + o
+                  copy_source = {
+                      'Bucket': source_bucket,
+                      'Key': key
+                  }
+                  print('copy_source: %s' % copy_source)
+                  print('dest_bucket = %s'%dest_bucket)
+                  print('key = %s' %key)
+                  s3.copy_object(CopySource=copy_source, Bucket=dest_bucket,
+                          Key=key)
+          def delete_objects(bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              objects = {'Objects': [{'Key': prefix + o} for o in objects]}
+              s3.delete_objects(Bucket=bucket, Delete=objects)
+          def timeout(event, context):
+              logging.error('Execution is about to time out, sending failure response to CloudFormation')
+              cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+          def handler(event, context):
+              # make sure we send a failure to CloudFormation if the function
+              # is going to timeout
+              timer = threading.Timer((context.get_remaining_time_in_millis()
+                          / 1000.00) - 0.5, timeout, args=[event, context])
+              timer.start()
+              print('Received event: %s' % json.dumps(event))
+              status = cfnresponse.SUCCESS
+              try:
+                  source_bucket = event['ResourceProperties']['SourceBucket']
+                  dest_bucket = event['ResourceProperties']['DestBucket']
+                  prefix = event['ResourceProperties']['Prefix']
+                  objects = event['ResourceProperties']['Objects']
+                  if event['RequestType'] == 'Delete':
+                      delete_objects(dest_bucket, prefix, objects)
+                  else:
+                      copy_objects(source_bucket, dest_bucket, prefix, objects)
+              except Exception as e:
+                  logging.error('Exception: %s' % e, exc_info=True)
+                  status = cfnresponse.FAILED
+              finally:
+                  timer.cancel()
+                  cfnresponse.send(event, context, status, {}, None)
+
+Outputs:
+  LambdaZipsBucket:
+    Description: This bucket contains the Lambda functions zip files
+    Value: !Ref LambdaZipsBucket
