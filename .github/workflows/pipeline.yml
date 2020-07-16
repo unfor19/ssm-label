@@ -13,8 +13,8 @@ jobs:
       - name: Build
         run: |
           bash scripts/app_build.sh
-      - name: Upload binary to S3 bucket
-      - uses: jakejarvis/s3-sync-action@master
+      - name: Upload to S3 bucket
+        uses: jakejarvis/s3-sync-action@master
         with:
           args: --acl public-read
         env:
