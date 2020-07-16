@@ -45,3 +45,24 @@ On startup, use AWS SDK and fetch all parameters, filter by label according to a
 
 1. Lambda Function, `ssm-cleanup` runs once a day to clean up all parameters which have more than 30 versions, cleans up the first 20 versions, and ignores versions with labels
 1. Lambda Function, `ssm-slack` sends a message to a Slack channel with the information about the change - actor, parameter name and version
+
+## Contributing
+
+Report issues/questions/feature requests on the [Issues](https://github.com/unfor19/ssm-label/issues) section.
+
+Pull requests are welcome! Ideally, create a feature branch and issue for every single change you make. These are the steps:
+
+1. Fork this repo
+1. Create your feature branch from master (`git checkout -b my-new-feature`)
+1. Add the code of your new feature
+1. Commit your remarkable changes (`git commit -am 'Added new feature'`)
+1. Push to the branch (`git push --set-up-stream origin my-new-feature`)
+1. Create a new Pull Request and tell us about your changes
+
+## Authors
+
+Created and maintained by [Meir Gabay](https://github.com/unfor19)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/unfor19/ssm-label/blob/master/LICENSE) file for details
