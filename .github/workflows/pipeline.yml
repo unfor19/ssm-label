@@ -15,8 +15,6 @@ jobs:
           bash scripts/app_build.sh
       - name: Upload to S3 bucket
         uses: qoqa/action-s3-cp@v1.1
-        with:
-          args: --acl public-read
         env:
           AWS_S3_BUCKET: ssm-label
           AWS_S3_PATH: "/"
