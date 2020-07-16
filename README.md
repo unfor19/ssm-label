@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-Attach the label `latest` on AWS SSM Parameter create/update. This is useful for applications which load AWS SSM Parameters on startup.
+Attach the label `latest` when AWS SSM Parameter is created or updated. This is useful for applications which load AWS SSM Parameters on startup.
 
 ## Getting Started
 
