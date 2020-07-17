@@ -8,6 +8,8 @@ Attach the label `latest` when AWS SSM Parameter is created or updated. This is 
 
 ### Deploy
 
+**IMPORTANT** `ssm-label` works per region, so deploy it in each reason that you need to use it
+
 [![Launch in Virginia](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png) Virginia us-east-1](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://ssm-label.s3-eu-west-1.amazonaws.com/cfn-template-ssm-label.yml)
 
 [![Launch in Ireland](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png) Ireland eu-west-1](https://eu-west-1.console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/quickcreate?templateURL=https://ssm-label.s3-eu-west-1.amazonaws.com/cfn-template-ssm-label.yml)
@@ -31,14 +33,27 @@ ssm-label.s3-eu-west-1.amazonaws.com/cfn-template-ssm-label.yml
 
 ### Use in your application
 
-On startup, use AWS SDK and fetch all parameters, filter by label according to a given environment variable which, for example `LABEL=latest`, save the results to a global object and use it across your application. See examples:
+On startup, use AWS SDK and fetch all parameters, filter by label according to a given environment variable which, for example `LABEL=latest`, save the results to a global object and use it across your application.
 
-- NodeJS
-- Python
+### Examples
+
+Demonstrates how to get AWS SSM Parameter store secrets by providing a root path, for example `/dev/` and assuming that `ssm-label` was deployed in your AWS account.
+
+Assuming that `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables ar set, or that you're using some other [credentials provider](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials), for example, `aws configure`
+
+#### Python
+
+- Requires Python 3.6+ [boto3](https://pypi.org/project/boto3/) `pip install boto3`
+- Replace `/dev/` with your SSM Parameters root path:
+  ```bash
+  python examples/python/index.py /dev/
+  ```
+
+#### NodeJS
 
 ## Limitations
 
-1. It takes ~30 seconds for the label to be attached
+1. It takes up to 30 seconds for the label `latest` to be attached
 1. There's a limit of 100 versions per parameter - [AWS hard limit](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-labels.html), see Upcoming Features below `ssm-cleanup`
 
 ## Upcoming Features
