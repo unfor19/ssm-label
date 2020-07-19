@@ -1,4 +1,5 @@
 import sys
+import os
 import boto3  # noqa: F401
 from singleton import Singleton
 
@@ -20,7 +21,7 @@ class Parameters(metaclass=Singleton):
         ]
 
         print(
-            f"Used AWS SSM SDK and fetched {len(self.parameters)} parameters")  # noqa: 504
+            f">> [LOG] Used AWS SSM SDK and fetched {len(self.parameters)} parameters")  # noqa: 504
 
     @staticmethod
     def handle_stringlist(parameter_value):
@@ -74,15 +75,20 @@ class Parameters(metaclass=Singleton):
 
 
 def other_function():
-    p2 = Parameters().get()  # doesn't use AWS API
+    p2 = Parameters().get()
     return p2
 
 
 if __name__ == "__main__":
-    if len(sys.argv) <= 1:
-        raise Exception("Must provide SSM Parameters path")
-    parameter_path = sys.argv[1]
-    p1 = Parameters(parameter_path).get()  # first time, uses AWS API
+    if len(sys.argv) == 2:
+        parameter_path = sys.argv[1]
+    elif os.environ.get('PARAMETERS_PATH'):
+        parameter_path = os.environ.get('PARAMETERS_PATH')
+    else:
+        raise Exception(
+            ">> [ERROR]: Must set PARAMETERS_PATH environment variable")
+
+    p1 = Parameters(parameter_path).get()  # // fetching from AWS
     print(f"\np1\n{p1}\n")
-    p2 = other_function()
+    p2 = other_function()  # already fetched from AWS
     print(f"p2\n{p2}\n")

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Set minimum required versions
-PYTHON_MINIMUM_MAJOR=3
-PYTHON_MINIMUM_MINOR=6
+PYTHON_MINIMUM_MAJOR=$1
+PYTHON_MINIMUM_MINOR=$2
 
 # Get python references
 PYTHON3_REF=$(which python3 | grep "/python3")
