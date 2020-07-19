@@ -25,4 +25,12 @@ done
 
 find "${PROJECT_DIR}" -maxdepth 1 -iname 'cfn-template-*.yml' -exec cp {} ${PROJECT_DIR}/dist/ \;
 
+[[ -z $GITHUB_SHA ]] && export GITHUB_SHA=$(git rev-parse HEAD)
+for f in ${PROJECT_DIR}/dist/*; do
+    if [ -f "$f" ]; then
+        new_file=$(echo "$f" | awk -F'.' '{ print $1"'-${GITHUB_SHA:0:8}'."$2 }')
+        cp $f $new_file
+    fi
+done
+
 echo "✅  Finished"
