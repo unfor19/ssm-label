@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "strictNullChecks": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "target": "ES2015",
+    "module": "CommonJS",
+    "types": ["node"]
+  },
+  "include": ["index.ts"],
+  "exclude": ["**/*.test.ts", "node_modules", "dist"]
+}
