@@ -65,7 +65,6 @@ class Parameters(metaclass=Singleton):
         for next_token in next_tokens:
             if next_token:
                 params['NextToken'] = next_token
-            print(params['Recursive'])
             response = client.get_parameters_by_path(**params)
             parameters += response['Parameters']
             if 'NextToken' in response:
