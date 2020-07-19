@@ -32,6 +32,15 @@ class Parameters(metaclass=Singleton):
         return parameter_value
 
     def get_parameters_by_latest_label(self, parameters_path):
+        recursive = True
+        decryption = True
+        max_results = 10
+        if os.environ.get('PARAMETERS_NON_RECURSIVE'):
+            recursive = False
+        if os.environ.get('PARAMETERS_NO_DECRYPTION'):
+            decryption = False
+        if os.environ.get('PARAMETERS_MAX_RESULTS'):
+            max_results = int(os.environ.get('PARAMETERS_MAX_RESULTS'))
         if not parameters_path:
             raise Exception("Must provide SSM Parameters path")
         client = boto3.client('ssm')
@@ -46,25 +55,18 @@ class Parameters(metaclass=Singleton):
                 ]
             },
         ]
+        params = {
+            "Path": parameters_path,
+            "Recursive": recursive,
+            "ParameterFilters": parameter_filters,
+            "WithDecryption": decryption,
+            "MaxResults": max_results,
+        }
         for next_token in next_tokens:
-            if not next_token:
-                response = client.get_parameters_by_path(
-                    Path=parameters_path,
-                    Recursive=True,
-                    ParameterFilters=parameter_filters,
-                    WithDecryption=True,
-                    MaxResults=10,
-                )
-            else:
-                response = client.get_parameters_by_path(
-                    Path=parameters_path,
-                    Recursive=True,
-                    ParameterFilters=parameter_filters,
-                    WithDecryption=True,
-                    MaxResults=10,
-                    NextToken=next_token
-                )
-
+            if next_token:
+                params['NextToken'] = next_token
+            print(params['Recursive'])
+            response = client.get_parameters_by_path(**params)
             parameters += response['Parameters']
             if 'NextToken' in response:
                 next_tokens.append(response['NextToken'])
