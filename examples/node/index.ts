@@ -27,11 +27,12 @@ class Parameters {
     private parameter_filters: any;
 
     private constructor() {
+        let label_value = process.env.PARAMETERS_LABEL ? process.env.PARAMETERS_LABEL : 'latest';
         this.parameter_filters = [
             {
                 Key: 'Label',
                 Option: 'Equals',
-                Values: ['latest'],
+                Values: [label_value],
             },
         ];
     }
@@ -54,7 +55,7 @@ class Parameters {
                 Path: parameter_path,
                 MaxResults: 10,
                 ParameterFilters: Parameters.instance.parameter_filters,
-                Recursive: true,
+                Recursive: process.env.PARAMETERS_RECURSIVE ? process.env.PARAMETERS_RECURSIVE : true,
                 WithDecryption: true,
             };
 
@@ -92,8 +93,8 @@ async function main() {
         console.log('>> [ERROR]: Must set PARAMETERS_PATH environment variable');
         process.exit(1);
     }
-    const parameter_path = process.env.parameter_path;
-    var p1 = await Parameters.get(parameter_path); // fetching from AWS
+
+    var p1 = await Parameters.get(parameters_path); // fetching from AWS
     console.log(p1);
     var p2 = await otherFunction(); // already fetched from AWS
     console.log(p2);
