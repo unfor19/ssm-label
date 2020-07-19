@@ -33,7 +33,7 @@ class Parameters(metaclass=Singleton):
 
     def get_parameters_by_latest_label(self, parameters_path):
         recursive = True
-        decryption = True
+        with_decryption = True
         max_results = 10
         if os.environ.get('PARAMETERS_NON_RECURSIVE'):
             recursive = False
@@ -59,7 +59,7 @@ class Parameters(metaclass=Singleton):
             "Path": parameters_path,
             "Recursive": recursive,
             "ParameterFilters": parameter_filters,
-            "WithDecryption": decryption,
+            "WithDecryption": with_decryption,
             "MaxResults": max_results,
         }
         for next_token in next_tokens:
