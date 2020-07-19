@@ -5,7 +5,7 @@ const getPaginatedResults = async (fn: Function) => {
     // Reference: https://advancedweb.hu/how-to-paginate-the-aws-js-sdk-using-async-generators/
     const EMPTY = Symbol('empty');
     const res = [];
-    for await (const lf of (async function* () {
+    for await (const lf of (async function*() {
         let NextMarker = EMPTY;
         while (NextMarker || NextMarker === EMPTY) {
             const { marker, results } = await fn(NextMarker !== EMPTY ? NextMarker : undefined);
@@ -26,16 +26,7 @@ class Parameters {
     private static parameters: any;
     private parameter_filters: any;
 
-    private constructor() {
-        let label_value = process.env.PARAMETERS_LABEL ? process.env.PARAMETERS_LABEL : 'latest';
-        this.parameter_filters = [
-            {
-                Key: 'Label',
-                Option: 'Equals',
-                Values: [label_value],
-            },
-        ];
-    }
+    private constructor() {}
 
     private static handleStringList(parameter_value: any) {
         let delimiter = ',';
@@ -51,12 +42,23 @@ class Parameters {
     public static async get(parameter_path?: any): Promise<Parameters> {
         if (!Parameters.instance) {
             Parameters.instance = new Parameters();
+            let label_value = process.env.PARAMETERS_LABEL ? process.env.PARAMETERS_LABEL : 'latest';
+            let parameter_filters = [
+                {
+                    Key: 'Label',
+                    Option: 'Equals',
+                    Values: [label_value],
+                },
+            ];
+            let recursive = process.env.PARAMETERS_NON_RECURSIVE ? false : true;
+            let with_decryption = process.env.PARAMETERS_NON_RECURSIVE ? false : true;
+            let max_results = process.env.MAX_RESULTS ? parseInt(<string>process.env.MAX_RESULTS, 10) : 10;
             var params: any = {
                 Path: parameter_path,
-                MaxResults: 10,
-                ParameterFilters: Parameters.instance.parameter_filters,
-                Recursive: process.env.PARAMETERS_RECURSIVE ? process.env.PARAMETERS_RECURSIVE : true,
-                WithDecryption: true,
+                MaxResults: max_results,
+                ParameterFilters: parameter_filters,
+                Recursive: recursive,
+                WithDecryption: with_decryption,
             };
 
             // Reference: https://advancedweb.hu/how-to-paginate-the-aws-js-sdk-using-async-generators/
