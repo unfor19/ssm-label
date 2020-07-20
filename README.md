@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-Attach the label `latest` when AWS SSM Parameter is created or updated. This is useful for applications which load AWS SSM Parameters on startup.
+Attach the label `latest` when AWS SSM Parameter is created or updated. Especially useful for applications which load AWS SSM Parameters on startup.
 
 ## Getting Started
 
@@ -33,27 +33,48 @@ ssm-label.s3-eu-west-1.amazonaws.com/cfn-template-ssm-label.yml
 
 ### Use in your application
 
-On startup, use AWS SDK and fetch all parameters, filter by label according to a given environment variable which, for example `LABEL=latest`, save the results to a global object and use it across your application.
+On startup, use AWS SDK and fetch all parameters, filter by label `latest`, save the results to a global variable (or a Singleton) and use it across your application.
+
+Need to rollback to a previous Parameter version?
+
+1. Go to your AWS Console
+1. Systems Manager > Parameter Store > Click on relevant Parameter
+1. History tab > Click on relevant version > Click Attach labels button
+1. Add another label > Type latest > A **good** warning - Moving from version # > Confirm
 
 ### Examples
 
-Demonstrates how to get AWS SSM Parameter store secrets by providing a root path, for example `/dev/` and assuming that `ssm-label` was deployed in your AWS account.
+- Requires `ssm-label` to be deployed in your AWS account
+- Assuming that `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables ar set, or that you're using some other [credentials provider](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials), for example, `aws configure`
+- Both examples rely on the following environment variables
 
-Assuming that `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables ar set, or that you're using some other [credentials provider](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials), for example, `aws configure`
+  ```bash
+  VARNAME=DEFAULT_VALUE
+  PARAMETERS_PATH=(Required)
+  PARAMETERS_NON_RECURSIVE=''
+  PARAMETERS_NO_DECRYPTION=''
+  PARAMETERS_MAX_RESULTS=10 # used in pagination, keep it as 10
+  ```
 
 #### Python
 
-- Requires Python 3.6+ [boto3](https://pypi.org/project/boto3/) `pip install boto3`
-- Replace `/dev/` with your SSM Parameters root path:
+- Requires Python 3.6+ and [boto3](https://pypi.org/project/boto3/) `pip install boto3`
+- Execute
   ```bash
-  python examples/python/index.py /dev/
+  $ bash examples/python_example.sh
   ```
 
 #### NodeJS
 
+- Requires [NodeJS 12.x](https://nodejs.org/en/download/package-manager/), [yarn](https://classic.yarnpkg.com/en/docs/install/) and [aws-sdk](https://www.npmjs.com/package/aws-sdk)
+- Execute
+  ```bash
+  $ bash examples/node_example.sh
+  ```
+
 ## Limitations
 
-1. It takes up to 30 seconds for the label `latest` to be attached
+1. It takes up to 30 seconds for the label `latest` to be attached - the Lambda Function which attaches the label runs for about ~1sec, but it takes time for it to be triggered by the CloudWatch Event
 1. There's a limit of 100 versions per parameter - [AWS hard limit](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-labels.html), see Upcoming Features below `ssm-cleanup`
 
 ## Upcoming Features
