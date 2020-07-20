@@ -38,7 +38,7 @@ class Parameters(metaclass=Singleton):
         if os.environ.get('PARAMETERS_NON_RECURSIVE'):
             recursive = False
         if os.environ.get('PARAMETERS_NO_DECRYPTION'):
-            decryption = False
+            with_decryption = False
         if os.environ.get('PARAMETERS_MAX_RESULTS'):
             max_results = int(os.environ.get('PARAMETERS_MAX_RESULTS'))
         if not parameters_path:
