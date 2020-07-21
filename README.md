@@ -45,7 +45,7 @@ Need to rollback to a previous Parameter version?
 ### Examples
 
 - Requires `ssm-label` to be deployed in your AWS account
-- Assuming that `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables ar set, or that you're using some other [credentials provider](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials), for example, `aws configure`
+- Assuming that `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables are set, or that you're using some other [credentials provider](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials), for example, `aws configure`
 - Both examples rely on the following environment variables
 
   ```bash
